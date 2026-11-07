@@ -2,7 +2,7 @@
 
 **mrkvpn** is an experimental, security-first, cross-platform private VPN project. It targets a small initial user group (approximately 5–10 users), with optional transports and independently managed endpoints.
 
-> **Status: Phase 0 / design and in-memory core prototype.** No functional VPN client, gateway, relay, kill switch, or production security guarantee has been implemented.
+> **Status: Phase 1 / gateway config-rendering alpha.** A safe WireGuard gateway configuration renderer exists, but no operational VPN client, firewall/kill switch, relay or production security guarantee has been implemented.
 
 ## Design goals
 
@@ -21,8 +21,12 @@
 - `core/transport`: interfaces for authenticated IP-packet transports; no live adapters yet.
 - `core/session`: thread-safe path registry and advisory path-selection logic, with unit tests.
 - `docs/session-transport-contract.md`: boundaries, security invariants, known limitations, and future active-active integration concerns.
+- `internal/wgconfig`: IPv4-only gateway configuration validation and wg-quick rendering; no route/firewall mutations.
+- `cmd/mrkvpn`: `gateway check` and `gateway render` commands. Rendering creates a fresh 0600 file and refuses overwrites.
+- `examples/gateway.example.json`: an intentionally invalid-key template; replace placeholders locally, not in Git.
+- `docs/wireguard-gateway-alpha.md`: key-handling, tests, explicit limitations and non-production lab instructions.
 
-The selector does **not** enforce network policy. Nothing in this repository currently protects real traffic from leakage. Do not route production traffic through it.
+The path selector and gateway renderer do **not** enforce network policy. Nothing in this repository currently protects real client traffic from leakage. Do not route production traffic through it.
 
 Run checks with a supported, patched Go toolchain:
 
@@ -30,6 +34,17 @@ Run checks with a supported, patched Go toolchain:
 go test -race ./...
 go vet ./...
 ```
+
+## Gateway config alpha
+
+See [Linux WireGuard gateway alpha](docs/wireguard-gateway-alpha.md). Example commands after creating local WireGuard keys and replacing placeholder configuration:
+
+```sh
+go run ./cmd/mrkvpn gateway check -config /path/to/gateway.json
+go run ./cmd/mrkvpn gateway render -config /path/to/gateway.json -out /path/to/new-wg0.conf
+```
+
+These commands do not install or start WireGuard, or configure firewall, NAT or DNS. The output file contains a private key and is mode 0600.
 
 ## Architecture and next steps
 
