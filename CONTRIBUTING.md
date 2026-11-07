@@ -26,6 +26,10 @@ Do not commit `.local/`, real key material or actual user/device endpoint lists.
 - Mark features as experimental until the corresponding integration and security tests exist.
 - Use narrow, reviewable PRs and require CI green before merging; current bootstrap PRs are stacked and may need orderly rebasing.
 
+## Control-plane development
+
+Run the independent Go module checks with `cd control && go test -race ./... && go vet ./...`. The admin service runs via `docker compose -f compose.yaml -f compose.control.yaml --profile admin up -d --build control`. Do not share bootstrap or issued tokens in test fixtures. This alpha uses a single-writer local store and a localhost-only token-authenticated management UI; it is not an internet-facing product.
+
 ## CI
 
 The workflow runs Go format checks, race-enabled unit tests, `go vet`, Compose parsing, image builds, shell syntax checks and offline bootstrap/render smoke tests. Passing CI is not equivalent to having a working client, secured gateway or successful real-network testing.
