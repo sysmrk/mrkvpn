@@ -39,7 +39,7 @@ Creates or preserves these paths:
   output/                   # rendered configs, initially empty
 ```
 
-This command does not generate client private keys or modify host routes/firewall. Re-running it preserves existing files, rather than silently rotating keys.
+This command does not generate client private keys or modify host routes/firewall. Re-running it preserves existing file contents, rather than silently rotating keys. On Linux/WSL2, bootstrap assigns the local config/secrets/output paths to the user who owns the checkout README, so they remain editable. The CLI runs under that UID/GID (rather than remaining root) for key access and file rendering.
 
 **Secret storage:** on Linux and WSL2, keep this repo inside a Linux filesystem with proper mode bits; do not keep private keys on Windows-mounted NTFS under `/mnt/c`. Treat backups and Docker daemon access as privileged. A developer who can access the Docker daemon or `.local/secrets/` can access these key files.
 
