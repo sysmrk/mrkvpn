@@ -11,8 +11,10 @@
 
 ## ۱. دریافت پروژه و ساخت ابزارها
 
+**توجه:** تا وقتی [PR شماره ۴](https://github.com/sysmrk/mrkvpn/pull/4) در `main` ادغام نشده، فایل‌های Docker فقط روی Branch زیر هستند. پس حتماً همین Branch را Clone کن؛ بعد از Merge می‌توان از `main` استفاده کرد.
+
 ```bash
-git clone https://github.com/sysmrk/mrkvpn.git
+git clone --branch build/docker-first-dev-and-gateway --single-branch https://github.com/sysmrk/mrkvpn.git
 cd mrkvpn
 docker compose --profile tools build
 ```
