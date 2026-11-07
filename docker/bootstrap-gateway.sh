@@ -47,5 +47,17 @@ else
     echo "Existing gateway JSON preserved."
 fi
 
+# On Linux/WSL2, give the repository owner access to the local state.
+# Only adjust these known file paths, never recursively follow symlinks.
+if [ -f /project-owner ]; then
+    OWNER_UID="$(stat -c '%u' /project-owner)"
+    OWNER_GID="$(stat -c '%g' /project-owner)"
+    for p in /config /secrets /output /config/gateway.json /secrets/gateway.key /secrets/gateway.pub; do
+        if [ -e "$p" ]; then
+            chown "$OWNER_UID:$OWNER_GID" "$p"
+        fi
+    done
+fi
+
 echo "Bootstrap complete. Add client PUBLIC keys locally before enabling clients."
 echo "The gateway public key is in .local/secrets/gateway.pub."
