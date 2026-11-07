@@ -262,6 +262,7 @@ function openForm(title, fields, submit) {
   const dialog=$('#modal');
   $('#modal-title').textContent=title;
   $('#modal-error').textContent='';
+  $('#modal-form button[type="submit"]').textContent='Save changes';
   const body=$('#modal-fields');body.replaceChildren();
   const controls={};
   for(const field of fields){
