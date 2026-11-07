@@ -14,7 +14,11 @@ import (
 
 func setup(t *testing.T) (*Store, string, http.Handler) {
 	t.Helper()
-	store, err := OpenStore(t.TempDir())
+	dir := t.TempDir()
+	if err := os.Chmod(dir, 0700); err != nil {
+		t.Fatal(err)
+	}
+	store, err := OpenStore(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
