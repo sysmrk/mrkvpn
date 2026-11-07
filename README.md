@@ -9,10 +9,12 @@
 
 ## Quick start — no VPS required
 
+> **PR status:** These Docker files are currently proposed in [draft PR #4](https://github.com/sysmrk/mrkvpn/pull/4), not yet merged to `main`. Clone the branch as shown below. After merge, clone `main` normally.
+
 You need **Docker Engine/Desktop with the Docker Compose v2 plugin** and network access to fetch the builder image and packages. A Linux kernel WireGuard module is **not required** for the first four commands.
 
 ```sh
-git clone https://github.com/sysmrk/mrkvpn.git
+git clone --branch build/docker-first-dev-and-gateway --single-branch https://github.com/sysmrk/mrkvpn.git
 cd mrkvpn
 docker compose --profile tools build
 docker compose --profile tools run --rm init
