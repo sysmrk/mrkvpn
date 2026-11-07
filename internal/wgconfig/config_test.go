@@ -20,11 +20,11 @@ func validConfig(t *testing.T) Gateway {
 		t.Fatal(err)
 	}
 	return Gateway{
-		InterfaceName: "wg0",
-		Address: "10.77.0.1/24",
-		ListenPort: 51820,
+		InterfaceName:  "wg0",
+		Address:        "10.77.0.1/24",
+		ListenPort:     51820,
 		PrivateKeyFile: path,
-		Peers: []Peer{{Name: "laptop", PublicKey: testKey(2), Address: "10.77.0.2/32"}},
+		Peers:          []Peer{{Name: "laptop", PublicKey: testKey(2), Address: "10.77.0.2/32"}},
 	}
 }
 
@@ -37,8 +37,8 @@ func TestRenderIsStrictAndDeterministic(t *testing.T) {
 	got := string(b)
 	for _, expected := range []string{
 		"[Interface]", "Address = 10.77.0.1/24", "ListenPort = 51820",
-		"PrivateKey = "+testKey(1), "SaveConfig = false",
-		"# Device: laptop", "[Peer]", "PublicKey = "+testKey(2),
+		"PrivateKey = " + testKey(1), "SaveConfig = false",
+		"# Device: laptop", "[Peer]", "PublicKey = " + testKey(2),
 		"AllowedIPs = 10.77.0.2/32",
 	} {
 		if !strings.Contains(got, expected) {
@@ -61,7 +61,7 @@ func TestRejectsInvalidGatewayAndPeers(t *testing.T) {
 		mod  func(*Gateway)
 	}{
 		{"bad interface", func(c *Gateway) { c.InterfaceName = "wg0\nPostUp=evil" }},
-		{"too long interface", func(c *Gateway) { c.InterfaceName = strings.Repeat("a",16) }},
+		{"too long interface", func(c *Gateway) { c.InterfaceName = strings.Repeat("a", 16) }},
 		{"missing port", func(c *Gateway) { c.ListenPort = 0 }},
 		{"invalid port", func(c *Gateway) { c.ListenPort = 65536 }},
 		{"ipv6", func(c *Gateway) { c.Address = "fd00::1/64" }},
