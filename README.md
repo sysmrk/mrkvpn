@@ -5,16 +5,16 @@
 > [!WARNING]
 > **Alpha / research software. Not a production VPN.** The current Go code can validate and render a Linux WireGuard gateway configuration, and an optional Docker lab gateway can attempt to bring up WireGuard on a compatible Linux host. There is **no working mrkvpn client, device enrollment service, kill switch, DNS/IPv6 leak protection, admin panel, QUIC adapter or Cloudflare relay** yet. Do not assume running this container protects a laptop or phone.
 
-**[راهنمای فارسی راه‌اندازی](docs/quickstart-fa.md)** | [English Docker guide](docs/docker-getting-started.md) | [Security & limitations](docs/security.md)
+**[پنل مدیریتی — راهنمای فارسی](docs/admin-panel-fa.md)** | [Docker guide](docs/docker-getting-started.md) | [Control API](docs/control-plane-api.md) | [Client priorities](docs/client-priorities.md) | [Security](docs/security.md)
 
 ## Quick start — no VPS required
 
-> **PR status:** These Docker files are currently proposed in [draft PR #4](https://github.com/sysmrk/mrkvpn/pull/4), not yet merged to `main`. Clone the branch as shown below. After merge, clone `main` normally.
+> **PR status:** These Docker and control-plane files are currently proposed in [draft PR #5](https://github.com/sysmrk/mrkvpn/pull/5), not yet merged to `main`. Clone the current feature branch as shown below. After merge, clone `main` normally.
 
 You need **Docker Engine/Desktop with the Docker Compose v2 plugin** and network access to fetch the builder image and packages. A Linux kernel WireGuard module is **not required** for the first four commands.
 
 ```sh
-git clone --branch build/docker-first-dev-and-gateway --single-branch https://github.com/sysmrk/mrkvpn.git
+git clone --branch feat/control-plane-admin-foundation --single-branch https://github.com/sysmrk/mrkvpn.git
 cd mrkvpn
 docker compose --profile tools build
 docker compose --profile tools run --rm init
@@ -32,6 +32,29 @@ docker compose -f compose.yaml -f compose.lab.yaml --profile lab up -d --build g
 
 This opt-in command publishes UDP 51820, requires Linux WireGuard kernel support and Docker `NET_ADMIN` inside the container, and is **for an isolated lab only**. Set up the firewall, inbound port permissions, test clients and leak protection separately. See the [step-by-step documentation](docs/docker-getting-started.md).
 
+## Management console — no VPN test host needed
+
+The **API-backed alpha Control Center** can be started on a development machine with Docker; it stores users, device public keys, gateways, desired policies, scoped admin tokens and audit events in a private named volume.
+
+```sh
+docker compose -f compose.yaml -f compose.control.yaml --profile admin up -d --build control
+docker compose -f compose.yaml -f compose.control.yaml --profile admin ps
+```
+
+Open **http://127.0.0.1:8787** on that same host. Bootstrap Owner token is in the private container volume; retrieve it in a trusted local terminal (it is a secret):
+
+```sh
+docker compose -f compose.yaml -f compose.control.yaml --profile admin exec -T control cat /data/bootstrap.token
+```
+
+This console has **no MFA/OIDC yet** and must remain **localhost-only** (use an SSH tunnel for remote administration). All device/gateway revocation and policy fields are desired state only; **there is no active WireGuard propagation or disconnect**. Stop without deleting data:
+
+```sh
+docker compose -f compose.yaml -f compose.control.yaml --profile admin down
+```
+
+See [Persian admin setup](docs/admin-panel-fa.md) and the [API and role model](docs/control-plane-api.md).
+
 ## What is in this repository?
 
 ```text
@@ -43,6 +66,8 @@ docker/                      Local bootstrap and lab gateway entrypoints
 compose.yaml                 Safe opt-in tooling and diagnostics
 compose.lab.yaml             Separate, opt-in Linux lab gateway
 Dockerfile                   Multi-stage builder/toolbox/gateway images
+control/                     Persistent Go API, RBAC, audit and embedded admin UI
+compose.control.yaml         Localhost-only control-plane Docker service
 docs/                        Guides, API contracts, security boundaries
 .github/workflows/           Go and Docker checks on pull requests
 .local/                      Local secrets/config/output; never committed
@@ -64,7 +89,7 @@ Initialization and CLI commands run with **no network**, a **read-only container
 - WireGuard as the primary direct-IP transport; no domain or Cloudflare dependency.
 - Independent QUIC/HTTPS transports, optional Cloudflare HTTPS/WSS relay, independent bridge endpoints and signed endpoint discovery.
 - Manual, preferred and automatic path selection; design for later active-active multipath without claiming bandwidth aggregation.
-- Client/gateway/control-plane separation with per-device authentication, revocation, MFA, RBAC, audit logs and a future admin UI.
+- Client/gateway/control-plane separation. An initial **admin UI, management API, token-based RBAC and audit log exist**; per-device authentication, enforced revocation, MFA/SSO and gateway synchronization are future work.
 - Measurable IPv4/IPv6, DNS and failure-transition leak tests on each supported OS.
 
 ## Development and quality
