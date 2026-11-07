@@ -1,59 +1,82 @@
 # mrkvpn
 
-**mrkvpn** is an experimental, security-first, cross-platform private VPN project. It targets a small initial user group (approximately 5–10 users), with optional transports and independently managed endpoints.
+**mrkvpn** is an experimental, security-first, cross-platform private VPN project for an initial group of approximately 5–10 people. It aims to combine direct-IP access, multiple independently authenticated transport options, reliable recovery and strict platform-specific leak prevention.
 
-> **Status: Phase 1 / gateway config-rendering alpha.** A safe WireGuard gateway configuration renderer exists, but no operational VPN client, firewall/kill switch, relay or production security guarantee has been implemented.
+> [!WARNING]
+> **Alpha / research software. Not a production VPN.** The current Go code can validate and render a Linux WireGuard gateway configuration, and an optional Docker lab gateway can attempt to bring up WireGuard on a compatible Linux host. There is **no working mrkvpn client, device enrollment service, kill switch, DNS/IPv6 leak protection, admin panel, QUIC adapter or Cloudflare relay** yet. Do not assume running this container protects a laptop or phone.
 
-## Design goals
+**[راهنمای فارسی راه‌اندازی](docs/quickstart-fa.md)** | [English Docker guide](docs/docker-getting-started.md) | [Security & limitations](docs/security.md)
 
-- Real IP-layer VPN with platform-native TUN/VPN interfaces.
-- Direct-IP connectivity with no domain requirement; WireGuard as the initial data plane.
-- Strict fail-closed behavior, DNS/IPv4/IPv6 leak protection, verified separately per OS.
-- Modular transport interfaces; evaluate QUIC and HTTPS/WebSocket relays in later phases.
-- **Cloudflare is optional**, never required for normal operation. Relay traffic must retain end-to-end client-to-gateway payload encryption.
-- Adaptive connection health, manual/preferred/automatic path selection, signed endpoint discovery, independent bridges.
-- Separate client, gateway, and control-plane responsibilities; per-device identity and revocation.
-- Future admin panel for users, devices, policies, gateways, security auditing, and operations.
-- Design for active-active multipath while avoiding unverified claims of seamless session migration or bandwidth aggregation.
+## Quick start — no VPS required
 
-## Current code
-
-- `core/transport`: interfaces for authenticated IP-packet transports; no live adapters yet.
-- `core/session`: thread-safe path registry and advisory path-selection logic, with unit tests.
-- `docs/session-transport-contract.md`: boundaries, security invariants, known limitations, and future active-active integration concerns.
-- `internal/wgconfig`: IPv4-only gateway configuration validation and wg-quick rendering; no route/firewall mutations.
-- `cmd/mrkvpn`: `gateway check` and `gateway render` commands. Rendering creates a fresh 0600 file and refuses overwrites.
-- `examples/gateway.example.json`: an intentionally invalid-key template; replace placeholders locally, not in Git.
-- `docs/wireguard-gateway-alpha.md`: key-handling, tests, explicit limitations and non-production lab instructions.
-
-The path selector and gateway renderer do **not** enforce network policy. Nothing in this repository currently protects real client traffic from leakage. Do not route production traffic through it.
-
-Run checks with a supported, patched Go toolchain:
+You need **Docker Engine/Desktop with the Docker Compose v2 plugin** and network access to fetch the builder image and packages. A Linux kernel WireGuard module is **not required** for the first four commands.
 
 ```sh
-go test -race ./...
-go vet ./...
+git clone https://github.com/sysmrk/mrkvpn.git
+cd mrkvpn
+docker compose --profile tools build
+docker compose --profile tools run --rm init
+docker compose --profile tools run --rm cli gateway check -config /config/gateway.json
+docker compose --profile tools run --rm cli gateway render -config /config/gateway.json -out /output/wg0.conf
 ```
 
-## Gateway config alpha
+The initializer is idempotent and creates local **gateway** keys and a zero-client JSON configuration. It never generates private keys for clients. The `check` command validates configuration without changing networking. `render` creates `.local/output/wg0.conf` with mode `0600` and **refuses to overwrite it**. All `.local/` state is ignored by Git.
 
-See [Linux WireGuard gateway alpha](docs/wireguard-gateway-alpha.md). Example commands after creating local WireGuard keys and replacing placeholder configuration:
+The optional experimental Linux gateway is **not** started by these commands:
 
 ```sh
-go run ./cmd/mrkvpn gateway check -config /path/to/gateway.json
-go run ./cmd/mrkvpn gateway render -config /path/to/gateway.json -out /path/to/new-wg0.conf
+docker compose -f compose.yaml -f compose.lab.yaml --profile lab up -d --build gateway
 ```
 
-These commands do not install or start WireGuard, or configure firewall, NAT or DNS. The output file contains a private key and is mode 0600.
+This opt-in command publishes UDP 51820, requires Linux WireGuard kernel support and Docker `NET_ADMIN` inside the container, and is **for an isolated lab only**. Set up the firewall, inbound port permissions, test clients and leak protection separately. See the [step-by-step documentation](docs/docker-getting-started.md).
 
-## Architecture and next steps
+## What is in this repository?
 
-See the [Session & Transport Contract](docs/session-transport-contract.md). The architecture baseline, preliminary threat model and roadmap are in the [Phase 0 documentation PR](https://github.com/sysmrk/mrkvpn/pull/1) until merged.
+```text
+cmd/mrkvpn/                  Go CLI: gateway check/render
+core/session/                In-memory, deterministic path selection
+core/transport/              Authenticated packet transport interfaces
+internal/wgconfig/           Validation and wg-quick file renderer
+docker/                      Local bootstrap and lab gateway entrypoints
+compose.yaml                 Safe opt-in tooling and diagnostics
+compose.lab.yaml             Separate, opt-in Linux lab gateway
+Dockerfile                   Multi-stage builder/toolbox/gateway images
+docs/                        Guides, API contracts, security boundaries
+.github/workflows/           Go and Docker checks on pull requests
+.local/                      Local secrets/config/output; never committed
+```
 
-## Security principles
+### Docker images and tools
 
-Use vetted cryptography and authenticated endpoints; never invent custom cryptography. Do not commit private keys, credentials, user configuration secrets or production endpoint lists. Treat startup, crash, transport switching and suspend/resume as leak-sensitive events. No claim of censorship invisibility or unconditional reachability is made.
+| Image target | Role | Included components |
+| --- | --- | --- |
+| `build` | Compile/test Go (CI and local development) | Go toolchain, C compiler for race tests |
+| `tooling` | No-network key bootstrap and config CLI, optional network diagnostics | mrkvpn CLI, WireGuard tools, iproute2, iptables/nftables, dig, curl, jq, ping, tcpdump, OpenSSL |
+| `gateway` | Optional Linux kernel WireGuard lab endpoint | WireGuard tools, iproute2, iptables, tini |
 
-## License
+Tooling commands run with **no network**, a **read-only container filesystem**, dropped capabilities and no Docker socket mount. The lab gateway alone receives `CAP_NET_ADMIN`, only when explicitly started. Docker images must still be trusted; Docker daemon access on the host is privileged.
 
-Not yet selected. No open-source license is granted by default; choose an explicit license before accepting external contributions.
+## Design goals (not all implemented)
+
+- IP-layer VPN with platform-native TUN and a real system-level fail-closed kill switch.
+- WireGuard as the primary direct-IP transport; no domain or Cloudflare dependency.
+- Independent QUIC/HTTPS transports, optional Cloudflare HTTPS/WSS relay, independent bridge endpoints and signed endpoint discovery.
+- Manual, preferred and automatic path selection; design for later active-active multipath without claiming bandwidth aggregation.
+- Client/gateway/control-plane separation with per-device authentication, revocation, MFA, RBAC, audit logs and a future admin UI.
+- Measurable IPv4/IPv6, DNS and failure-transition leak tests on each supported OS.
+
+## Development and quality
+
+With Docker installed, use `make build init check render` on Linux/macOS/WSL2, or the raw Compose commands on Windows. `make test` runs Go tests in the build container. CI checks Go formatting, unit tests, race detector, static analysis, Compose syntax, image builds and an offline config-render smoke test.
+
+Work is proposed as stacked pull requests while under review:
+[architecture PR #1](https://github.com/sysmrk/mrkvpn/pull/1),
+[core PR #2](https://github.com/sysmrk/mrkvpn/pull/2),
+[gateway generator PR #3](https://github.com/sysmrk/mrkvpn/pull/3).
+These links are informational; the project should be merged in dependency order.
+
+## Security and governance
+
+Never commit private keys, real gateway configuration, endpoint lists, tokens or user credentials. Local state is kept under `.local/`. Running Docker does not provide a client kill switch or eliminate leaks. See [Security & limitations](docs/security.md) before exposing any UDP port to the internet.
+
+**License:** not selected. Until an explicit license is added, no open-source license is granted by default.

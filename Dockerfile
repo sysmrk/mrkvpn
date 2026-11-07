@@ -1,6 +1,7 @@
 # syntax=docker/dockerfile:1
-# Build and tooling images are separate from the privileged lab gateway.
+# Go build, diagnostics toolbox and network-facing lab gateway are separate.
 FROM golang:1.27.3-alpine3.23 AS build
+RUN apk add --no-cache gcc musl-dev
 WORKDIR /src
 COPY go.mod ./
 COPY core ./core
