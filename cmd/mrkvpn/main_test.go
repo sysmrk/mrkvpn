@@ -24,9 +24,9 @@ func fixture(t *testing.T) string {
 		t.Fatal(err)
 	}
 	cfg := wgconfig.Gateway{
-		InterfaceName: "wg0",
-		Address: "10.77.0.1/24",
-		ListenPort: 51820,
+		InterfaceName:  "wg0",
+		Address:        "10.77.0.1/24",
+		ListenPort:     51820,
 		PrivateKeyFile: keyFile,
 		Peers: []wgconfig.Peer{
 			{Name: "first-device", PublicKey: testKey(8), Address: "10.77.0.2/32"},
