@@ -22,7 +22,7 @@ mrkvpn is alpha-stage research and gateway bootstrap tooling. **No application-l
 ## Docker isolation
 
 - The default Compose file only contains opt-in profiles: a local initializer, CLI, and diagnostic toolbox. `docker compose up` does not implicitly start a network-facing service.
-- `init` and `cli` have `network_mode: none`, dropped Linux capabilities, `read_only: true`, and `no-new-privileges`. Their only writable state is explicitly mounted local configuration/output directories.
+- `init` and `cli` have `network_mode: none`, `read_only: true`, `no-new-privileges` and a drop-all baseline for Linux capabilities. The offline initializer receives only `CHOWN`, `FOWNER`, and `DAC_OVERRIDE` to maintain owner-only bind-mounted files; the CLI entrypoint receives only `SETUID` and `SETGID` to drop to the repository owner before loading secrets. No tooling service has `NET_ADMIN`. Their only writable state is explicitly mounted local configuration/output directories.
 - `diag` is separately opt-in and has `NET_RAW` for container-only packet diagnostics, not `NET_ADMIN` or host networking.
 - The optional **lab-only** gateway has `CAP_NET_ADMIN` to set up its own WireGuard interface, IPv4 forwarding and NAT in its container network namespace. It does **not** have `privileged: true`, `SYS_MODULE`, host network mode or Docker daemon socket access.
 - The gateway publishes UDP 51820 by default. Cloud/provider/host network firewalls require deliberate configuration. The image only tests local interface existence in its health check, not tunnel security or client reachability.
@@ -31,7 +31,7 @@ mrkvpn is alpha-stage research and gateway bootstrap tooling. **No application-l
 ## Secrets
 
 - Gateway private keys and the rendered `wg0.conf` are sensitive. They are never stored in the example JSON, never written to stdout by the CLI, and are excluded from Git by `.gitignore`.
-- The CLI container must read the owner-only key file, so it runs as container root with all additional capabilities dropped. This limits but does not eliminate the risk from compromised images or daemon access.
+- The offline initializer starts as container root to create local key material. On Linux/WSL2 it assigns ownership of known local files and directories to the owner of the checkout README. The CLI entrypoint then drops to that numeric user before accessing owner-only key files. This limits but does not eliminate the risk from compromised images, local bind mounts or daemon access.
 - Ensure local `.local/` state and backups remain restricted; avoid Windows/NTFS bind mounts when permission bits cannot be enforced.
 - Client keys must be generated and retained only on their respective devices. Do not pass a client private key to the gateway or control plane.
 
