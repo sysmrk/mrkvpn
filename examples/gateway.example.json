@@ -1,0 +1,13 @@
+{
+  "interface_name": "wg0",
+  "address": "10.77.0.1/24",
+  "listen_port": 51820,
+  "private_key_file": "/etc/wireguard/mrkvpn-gateway.key",
+  "peers": [
+    {
+      "name": "personal-laptop",
+      "public_key": "REPLACE_WITH_REAL_WIREGUARD_CLIENT_PUBLIC_KEY",
+      "address": "10.77.0.2/32"
+    }
+  ]
+}
