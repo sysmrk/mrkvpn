@@ -2,8 +2,9 @@
 # the portable interface, including Windows PowerShell.
 DC = docker compose
 LAB = docker compose -f compose.yaml -f compose.lab.yaml --profile lab
+ADMIN = docker compose -f compose.yaml -f compose.control.yaml --profile admin
 
-.PHONY: help build init check render lab-build lab-up lab-down lab-logs diag test lint
+.PHONY: help build init check render lab-build lab-up lab-down lab-logs admin-build admin-up admin-down admin-logs admin-ps diag test lint
 
 help:
 	@echo "mrkvpn (Phase 1 alpha, not production-ready)"
@@ -16,6 +17,10 @@ help:
 	@echo "  make lab-down    Stop lab gateway; keep keys and configuration"
 	@echo "  make lab-logs    Follow lab logs"
 	@echo "  make diag        Open isolated diagnostics toolbox"
+	@echo "  make admin-up    Build and start localhost-only admin panel"
+	@echo "  make admin-down  Stop panel; keep its persistent data"
+	@echo "  make admin-logs  Follow control-plane logs (never print secrets)"
+	@echo "  make admin-ps    Show control-plane status"
 	@echo "  make test        Run Go tests inside the builder image (local Go optional)"
 
 build:
@@ -42,6 +47,21 @@ lab-down:
 
 lab-logs:
 	$(LAB) logs --follow gateway
+
+admin-build:
+	$(ADMIN) build control
+
+admin-up:
+	$(ADMIN) up -d --build control
+
+admin-down:
+	$(ADMIN) down
+
+admin-logs:
+	$(ADMIN) logs --follow control
+
+admin-ps:
+	$(ADMIN) ps
 
 diag:
 	$(DC) --profile diagnostics run --rm diag
