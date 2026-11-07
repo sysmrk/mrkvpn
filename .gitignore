@@ -1,0 +1,22 @@
+# Credentials and private keys
+*.key
+*.pem
+*.p12
+*.pfx
+*.mobileconfig
+*.conf.local
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+# Builds and local state
+bin/
+dist/
+build/
+coverage/
+*.test
+*.log
+.DS_Store
+.idea/
+.vscode/
