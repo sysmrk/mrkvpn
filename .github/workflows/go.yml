@@ -1,0 +1,29 @@
+name: Go core checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 'stable'
+          cache: false
+      - name: Formatting
+        run: |
+          test -z "$(gofmt -l core)"
+      - name: Unit tests and race detector
+        run: go test -race ./...
+      - name: Static checks
+        run: go vet ./...
