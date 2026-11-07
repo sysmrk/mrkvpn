@@ -54,7 +54,7 @@ docs/                        Guides, API contracts, security boundaries
 | `tooling` | No-network key bootstrap and config CLI, optional network diagnostics | mrkvpn CLI, WireGuard tools, iproute2, iptables/nftables, dig, curl, jq, ping, tcpdump, OpenSSL |
 | `gateway` | Optional Linux kernel WireGuard lab endpoint | WireGuard tools, iproute2, iptables, tini |
 
-Tooling commands run with **no network**, a **read-only container filesystem**, dropped capabilities and no Docker socket mount. The lab gateway alone receives `CAP_NET_ADMIN`, only when explicitly started. Docker images must still be trusted; Docker daemon access on the host is privileged.
+Initialization and CLI commands run with **no network**, a **read-only container filesystem**, a drop-all capability baseline with only narrowly scoped ownership/UID-switch exceptions, and no Docker socket mount. The lab gateway alone receives `CAP_NET_ADMIN`, only when explicitly started. Docker images must still be trusted; Docker daemon access on the host is privileged.
 
 ## Design goals (not all implemented)
 
