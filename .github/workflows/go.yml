@@ -1,4 +1,4 @@
-name: Go core checks
+name: Go quality checks
 
 on:
   push:
@@ -22,7 +22,11 @@ jobs:
           cache: false
       - name: Formatting
         run: |
-          test -z "$(gofmt -l core)"
+          unformatted="$(gofmt -l core cmd internal)"
+          if [ -n "$unformatted" ]; then
+            gofmt -d core cmd internal
+            exit 1
+          fi
       - name: Unit tests and race detector
         run: go test -race ./...
       - name: Static checks
