@@ -1,0 +1,60 @@
+name: mrkvpn
+# Safe default: all services are opt-in profiles. Running compose 'up'
+# without a profile does NOT start a network-facing gateway.
+services:
+  init:
+    profiles: [tools]
+    image: mrkvpn/tooling:local
+    build:
+      context: .
+      target: tooling
+    entrypoint: ["/usr/local/bin/bootstrap-gateway"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    # Short-lived offline init needs ownership/permission maintenance on bind mounts.
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./.local/config:/config
+      - ./.local/secrets:/secrets
+      - ./.local/output:/output
+      - ./README.md:/project-owner:ro
+    restart: "no"
+
+  cli:
+    profiles: [tools]
+    image: mrkvpn/tooling:local
+    build:
+      context: .
+      target: tooling
+    entrypoint: ["/usr/local/bin/cli-entrypoint"]
+    network_mode: none
+    read_only: true
+    cap_drop: [ALL]
+    # su-exec drops to the checkout owner before opening local key material.
+    cap_add: [SETUID, SETGID]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./.local/config:/config:ro
+      - ./.local/secrets:/secrets:ro
+      - ./.local/output:/output
+      - ./README.md:/project-owner:ro
+    restart: "no"
+
+  diag:
+    profiles: [diagnostics]
+    image: mrkvpn/tooling:local
+    build:
+      context: .
+      target: tooling
+    entrypoint: ["/bin/sh"]
+    stdin_open: true
+    tty: true
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    restart: "no"

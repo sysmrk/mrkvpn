@@ -1,4 +1,4 @@
-name: Go quality checks
+name: Go and Docker quality checks
 
 on:
   push:
@@ -9,9 +9,9 @@ permissions:
   contents: read
 
 jobs:
-  core:
+  go:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v7
         with:
@@ -20,7 +20,7 @@ jobs:
         with:
           go-version: 'stable'
           cache: false
-      - name: Formatting
+      - name: Go formatting
         run: |
           unformatted="$(gofmt -l core cmd internal)"
           if [ -n "$unformatted" ]; then
@@ -31,3 +31,43 @@ jobs:
         run: go test -race ./...
       - name: Static checks
         run: go vet ./...
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Parse Compose files
+        run: |
+          docker compose --profile tools config --quiet
+          docker compose -f compose.yaml -f compose.lab.yaml --profile lab config --quiet
+      - name: Check shell scripts
+        run: |
+          sh -n docker/bootstrap-gateway.sh
+          sh -n docker/gateway-entrypoint.sh
+          sh -n docker/cli-entrypoint.sh
+      - name: Build tooling and gateway images
+        run: |
+          docker compose --profile tools build
+          docker compose -f compose.yaml -f compose.lab.yaml --profile lab build gateway
+      - name: Offline bootstrap and configuration smoke test
+        run: |
+          docker compose --profile tools run --rm init
+          docker compose --profile tools run --rm cli gateway check -config /config/gateway.json
+          docker compose --profile tools run --rm cli gateway render -config /config/gateway.json -out /output/wg0.conf
+          echo 'Rendered config filesystem metadata (not contents):'
+          if [ ! -f .local/output/wg0.conf ]; then
+            find .local -maxdepth 3 -type f -printf '%p\n'
+            echo 'Expected rendered configuration not found on bind mount' >&2
+            exit 1
+          fi
+          stat -c '%n mode=%a uid=%u gid=%g' .local/output/wg0.conf
+          test "$(stat -c '%u' .local/output/wg0.conf)" = "$(stat -c '%u' README.md)"
+          test "$(stat -c '%a' .local/output/wg0.conf)" = "600"
+          if docker compose --profile tools run --rm cli gateway render -config /config/gateway.json -out /output/wg0.conf; then
+            echo "Refused-overwrite protection unexpectedly succeeded" >&2
+            exit 1
+          fi
+          echo "Docker bootstrap and safe no-overwrite smoke tests passed"

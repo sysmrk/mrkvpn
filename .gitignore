@@ -1,4 +1,5 @@
-# Never commit secrets or rendered WireGuard configurations.
+# Never commit real keys, local WireGuard tunnel configs or runtime state.
+.local/
 *.key
 *.pem
 *.p12
