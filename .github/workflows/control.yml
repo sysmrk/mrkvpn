@@ -1,0 +1,53 @@
+name: Control plane and admin UI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  control:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: 'stable'
+          cache: false
+      - name: Go formatting
+        working-directory: control
+        run: |
+          unformatted="$(gofmt -l cmd internal)"
+          if [ -n "$unformatted" ]; then
+            gofmt -d cmd internal
+            exit 1
+          fi
+      - name: Tests with race detector
+        working-directory: control
+        run: go test -race ./...
+      - name: Static analysis
+        working-directory: control
+        run: go vet ./...
+      - name: Compose syntax and container build
+        run: |
+          docker compose -f compose.yaml -f compose.control.yaml --profile admin config --quiet
+          docker compose -f compose.yaml -f compose.control.yaml --profile admin build control
+      - name: Local-only control plane HTTP smoke test
+        run: |
+          set -eu
+          docker compose -f compose.yaml -f compose.control.yaml --profile admin up -d control
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/healthz | grep -q '"status":"ok"'; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8787/healthz >/dev/null
+          test "$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8787/api/v1/me)" = "401"
+          BOOTSTRAP_TOKEN="$(docker compose -f compose.yaml -f compose.control.yaml --profile admin exec -T control cat /data/bootstrap.token)"
+          test "$(curl -sS -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $BOOTSTRAP_TOKEN" http://127.0.0.1:8787/api/v1/me)" = "200"
+          docker compose -f compose.yaml -f compose.control.yaml --profile admin down -v
