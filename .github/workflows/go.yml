@@ -47,6 +47,7 @@ jobs:
         run: |
           sh -n docker/bootstrap-gateway.sh
           sh -n docker/gateway-entrypoint.sh
+          sh -n docker/cli-entrypoint.sh
       - name: Build tooling and gateway images
         run: |
           docker compose --profile tools build
@@ -56,7 +57,14 @@ jobs:
           docker compose --profile tools run --rm init
           docker compose --profile tools run --rm cli gateway check -config /config/gateway.json
           docker compose --profile tools run --rm cli gateway render -config /config/gateway.json -out /output/wg0.conf
-          test -f .local/output/wg0.conf
+          echo 'Rendered config filesystem metadata (not contents):'
+          if [ ! -f .local/output/wg0.conf ]; then
+            find .local -maxdepth 3 -type f -printf '%p\n'
+            echo 'Expected rendered configuration not found on bind mount' >&2
+            exit 1
+          fi
+          stat -c '%n mode=%a uid=%u gid=%g' .local/output/wg0.conf
+          test "$(stat -c '%u' .local/output/wg0.conf)" = "$(stat -c '%u' README.md)"
           test "$(stat -c '%a' .local/output/wg0.conf)" = "600"
           if docker compose --profile tools run --rm cli gateway render -config /config/gateway.json -out /output/wg0.conf; then
             echo "Refused-overwrite protection unexpectedly succeeded" >&2
