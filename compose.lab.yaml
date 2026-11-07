@@ -1,0 +1,36 @@
+# Explicit opt-in Linux-only experimental WireGuard gateway.
+# NEVER use this overlay as a claim of leak-free/production-ready VPN service.
+services:
+  gateway:
+    profiles: [lab]
+    image: mrkvpn/gateway:local
+    build:
+      context: .
+      target: gateway
+    cap_drop: [ALL]
+    cap_add: [NET_ADMIN]
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    tmpfs:
+      - /run:size=16m,mode=0700
+      - /tmp:size=16m,mode=1777
+    sysctls:
+      net.ipv4.ip_forward: "1"
+    environment:
+      MRKVPN_EGRESS_IFACE: eth0
+    volumes:
+      - ./.local/output/wg0.conf:/etc/wireguard/wg0.conf:ro
+    ports:
+      - "${MRKVPN_UDP_PORT:-51820}:51820/udp"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wg", "show", "wg0"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
