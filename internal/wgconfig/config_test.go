@@ -24,7 +24,7 @@ func validConfig(t *testing.T) Gateway {
 		Address: "10.77.0.1/24",
 		ListenPort: 51820,
 		PrivateKeyFile: path,
-		Peers: []Peer{{Name:"laptop", PublicKey:testKey(2), Address:"10.77.0.2/32"}},
+		Peers: []Peer{{Name: "laptop", PublicKey: testKey(2), Address: "10.77.0.2/32"}},
 	}
 }
 
@@ -77,9 +77,9 @@ func TestRejectsInvalidGatewayAndPeers(t *testing.T) {
 		{"peer network address", func(c *Gateway) { c.Peers[0].Address = "10.77.0.0/32" }},
 		{"peer broadcast address", func(c *Gateway) { c.Peers[0].Address = "10.77.0.255/32" }},
 		{"peer same as server", func(c *Gateway) { c.Peers[0].Address = "10.77.0.1/32" }},
-		{"duplicate peer IP", func(c *Gateway) { c.Peers = append(c.Peers, Peer{Name:"phone", PublicKey:testKey(3), Address:"10.77.0.2/32"}) }},
-		{"duplicate public key", func(c *Gateway) { c.Peers = append(c.Peers, Peer{Name:"phone", PublicKey:testKey(2), Address:"10.77.0.3/32"}) }},
-		{"duplicate peer name", func(c *Gateway) { c.Peers = append(c.Peers, Peer{Name:"laptop", PublicKey:testKey(3), Address:"10.77.0.3/32"}) }},
+		{"duplicate peer IP", func(c *Gateway) { c.Peers = append(c.Peers, Peer{Name: "phone", PublicKey: testKey(3), Address: "10.77.0.2/32"}) }},
+		{"duplicate public key", func(c *Gateway) { c.Peers = append(c.Peers, Peer{Name: "phone", PublicKey: testKey(2), Address: "10.77.0.3/32"}) }},
+		{"duplicate peer name", func(c *Gateway) { c.Peers = append(c.Peers, Peer{Name: "laptop", PublicKey: testKey(3), Address: "10.77.0.3/32"}) }},
 		{"relative private key path", func(c *Gateway) { c.PrivateKeyFile = "gateway.key" }},
 	}
 	for _, tc := range tests {
