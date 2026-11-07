@@ -73,11 +73,11 @@ func (t Token) View() TokenView {
 }
 
 type AuditEvent struct {
-	ID        string    `json:"id"`
-	At        time.Time `json:"at"`
-	ActorID   string    `json:"actor_id"`
-	Action    string    `json:"action"`
-	Target    string    `json:"target"`
+	ID      string    `json:"id"`
+	At      time.Time `json:"at"`
+	ActorID string    `json:"actor_id"`
+	Action  string    `json:"action"`
+	Target  string    `json:"target"`
 }
 
 type State struct {
@@ -93,7 +93,7 @@ type State struct {
 func newState() State {
 	return State{
 		SchemaVersion: schemaVersion,
-		Users: map[string]User{}, Devices: map[string]Device{},
+		Users:         map[string]User{}, Devices: map[string]Device{},
 		Gateways: map[string]Gateway{}, Policies: map[string]Policy{},
 		Tokens: map[string]Token{}, Audit: []AuditEvent{},
 	}
