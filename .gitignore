@@ -1,0 +1,24 @@
+# Never commit secrets or rendered WireGuard configurations.
+*.key
+*.pem
+*.p12
+*.pfx
+*.conf
+*.conf.local
+gateway.json
+.env
+.env.*
+!.env.example
+secrets/
+credentials/
+
+# Build and editor artifacts.
+bin/
+dist/
+build/
+coverage/
+*.test
+*.log
+.DS_Store
+.idea/
+.vscode/
