@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>mrkvpn — Control Center</title>
+  <link rel="stylesheet" href="/app.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div id="login" class="login-screen">
+    <div class="login-brand"><span class="mark">m</span><span>mrkvpn <small>CONTROL CENTER</small></span></div>
+    <div class="login-card">
+      <div class="eyebrow">PRIVATE NETWORK MANAGEMENT</div>
+      <h1>Connect to your control plane.</h1>
+      <p class="muted">Enter your administrator API token. The token is held only in this browser tab's memory and is not stored locally.</p>
+      <form id="login-form">
+        <label for="auth-token">Access token</label>
+        <input id="auth-token" type="password" autocomplete="off" spellcheck="false" required placeholder="mrkvpn_...">
+        <button type="submit" class="button primary full">Unlock console</button>
+      </form>
+      <p id="login-error" class="error-text" role="alert" aria-live="polite"></p>
+      <div class="login-note"><span class="status-dot"></span> Localhost-only alpha · No public exposure recommended</div>
+    </div>
+    <p class="login-footer">Alpha control plane · Not connected to a live VPN data plane</p>
+  </div>
+  <div id="shell" class="shell hidden">
+    <aside class="sidebar">
+      <div class="brand"><span class="mark">m</span><span>mrkvpn <small>CONTROL CENTER</small></span></div>
+      <div class="side-label">WORKSPACE</div>
+      <nav aria-label="Main navigation" class="nav">
+        <button data-view="overview" class="nav-item active"><span class="nav-symbol">◫</span> Overview</button>
+        <button data-view="users" class="nav-item"><span class="nav-symbol">♙</span> Users</button>
+        <button data-view="devices" class="nav-item"><span class="nav-symbol">▣</span> Devices</button>
+        <button data-view="gateways" class="nav-item"><span class="nav-symbol">⬡</span> Gateways</button>
+        <button data-view="policies" class="nav-item"><span class="nav-symbol">≡</span> Policies</button>
+        <button data-view="audit" class="nav-item"><span class="nav-symbol">≣</span> Audit trail</button>
+        <button data-view="access" class="nav-item owner-only"><span class="nav-symbol">✧</span> Access tokens</button>
+      </nav>
+      <div class="side-bottom"><span class="status-dot"></span><div><strong>Control plane</strong><small>Desired state only</small></div></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>mrkvpn</span><span class="slash">/</span><strong id="crumb">Overview</strong></div>
+        <div class="top-actions">
+          <span class="alpha">ALPHA</span>
+          <span class="identity" id="actor-role">loading</span>
+          <button id="logout" class="button small ghost">Sign out</button>
+        </div>
+      </header>
+      <div class="page">
+        <div class="page-heading">
+          <div><div class="eyebrow">NETWORK CONTROL</div><h1 id="page-title">Overview</h1><p id="page-subtitle" class="muted">Manage the inventory and desired security state of your private network.</p></div>
+          <button id="new-item" class="button primary hidden">+ Create</button>
+        </div>
+        <div class="warning"><strong>Not yet enforcing:</strong> This panel manages inventory and desired policies. It does not currently push changes to WireGuard, revoke live peers, or prove active connection status.</div>
+        <div id="page-content" aria-live="polite"></div>
+        <footer>mrkvpn alpha · Security-first by design · No browser storage · Gateway sync pending</footer>
+      </div>
+    </main>
+  </div>
+  <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+  <dialog id="modal" aria-label="Management form">
+    <div class="modal-head"><h2 id="modal-title"></h2><button id="modal-close" class="icon-button" aria-label="Close">×</button></div>
+    <form id="modal-form"><div id="modal-fields"></div><p id="modal-error" class="error-text" role="alert"></p><div class="modal-actions"><button type="button" id="modal-cancel" class="button ghost">Cancel</button><button type="submit" class="button primary">Save changes</button></div></form>
+  </dialog>
+</body>
+</html>
