@@ -1,0 +1,35 @@
+# Explicit opt-in, localhost-only alpha control plane.
+# No WireGuard access, host networking, privileged mode or Docker socket.
+services:
+  control:
+    profiles: [admin]
+    image: mrkvpn/control:local
+    build:
+      context: .
+      target: control
+    read_only: true
+    user: "10001:10001"
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 128
+    mem_limit: 256m
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    volumes:
+      - control-data:/data
+    ports:
+      - "127.0.0.1:${MRKVPN_CONTROL_PORT:-8787}:8787"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8787/healthz"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  control-data:

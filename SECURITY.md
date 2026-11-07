@@ -13,6 +13,6 @@ If the repository's GitHub Security tab offers private vulnerability reporting, 
 - Running the Compose lab container does not prevent DNS, IPv6 or direct-route leaks on any client.
 - An operational WireGuard interface does not mean authentication lifecycle, revocation, client kill switch or safe multi-transport failover is implemented.
 - There is no guarantee against DPI detection, IP blocking, traffic analysis, active probing or censorship shutdowns.
-- Cloudflare integration and the admin panel are not implemented at this stage.
+- Cloudflare integration and production-ready administration are not implemented. A localhost-only alpha admin panel now supports inventory, desired policies and API-token RBAC but has **no MFA/OIDC, authenticated gateway-agent synchronization or enforced live revocation**.
 
 See [docs/security.md](docs/security.md) for current boundaries, privileges and release requirements.
