@@ -34,6 +34,8 @@ jobs:
       - name: Static analysis
         working-directory: control
         run: go vet ./...
+      - name: Admin JavaScript syntax
+        run: node --check control/internal/plane/web/app.js
       - name: Compose syntax and container build
         run: |
           docker compose -f compose.yaml -f compose.control.yaml --profile admin config --quiet
