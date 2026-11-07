@@ -14,8 +14,10 @@ The repository uses multi-stage `Dockerfile` targets. No Go installation is need
 
 ## 2. Get the source and build tools
 
+**Until [Docker PR #4](https://github.com/sysmrk/mrkvpn/pull/4) is merged**, check out the PR branch using the command below. Once merged, a normal clone of `main` is enough.
+
 ```sh
-git clone https://github.com/sysmrk/mrkvpn.git
+git clone --branch build/docker-first-dev-and-gateway --single-branch https://github.com/sysmrk/mrkvpn.git
 cd mrkvpn
 docker compose version
 docker compose --profile tools build
