@@ -17,6 +17,7 @@ services:
       - ./.local/config:/config
       - ./.local/secrets:/secrets
       - ./.local/output:/output
+      - ./README.md:/project-owner:ro
     restart: "no"
 
   cli:
@@ -25,7 +26,7 @@ services:
     build:
       context: .
       target: tooling
-    entrypoint: ["/usr/local/bin/mrkvpn"]
+    entrypoint: ["/usr/local/bin/cli-entrypoint"]
     network_mode: none
     read_only: true
     cap_drop: [ALL]
@@ -34,6 +35,7 @@ services:
       - ./.local/config:/config:ro
       - ./.local/secrets:/secrets:ro
       - ./.local/output:/output
+      - ./README.md:/project-owner:ro
     restart: "no"
 
   diag:
